@@ -1113,10 +1113,11 @@ ASSOCIATE(MINPRR=>YDPARAR%MINPRR, MINPRS=>YDPARAR%MINPRS, MVQS=>YDPARAR%MVQS, &
 ! this key remove the part of computations that render the model not reproducing
 ! H or NH when called in the other core
 !LSURFEX=.NOT.LNHDYN
-!LSURFEX=.TRUE.
-ZALPHA=0.01
+!LSURFEX=LNHDYN
+LSURFEX=.TRUE.
+ZALPHA=0.1
 IF (LNHDYN) THEN
-ZALPHA=1.
+ZALPHA=1.0
 ELSE
 ZALPHA=0.01
 END IF
@@ -2640,7 +2641,7 @@ ENDIF
 !     --------------------------------------------------------------------
 !DEBUG LMSE ONLY IN hydro
 !IF (LNHDYN.AND.LLMSE) THEN
-IF (.TRUE.) THEN
+IF (LSURFEX) THEN
 IF (LLMSE) THEN
 ! A loop around SURFEX in order to test OpenMP
 ! Initialisations 
@@ -2666,7 +2667,7 @@ IF (LLMSE) THEN
 
   IF (LLMSE_PARAM) THEN
 !DEBUG BYPASS ARO_GROUND_PARAM
-    IF (.TRUE.) THEN
+    IF (LSURFEX) THEN
     CALL ARO_GROUND_PARAM( KBL,KGPCOMP,&
        & KFDIA,KIDIA,KFDIA,KSTEP,&
        & NRR,NSW,NGFL_EXT,NDGUNG, NDGUXG, NDLUNG, NDLUXG,LSURFEX_KFROM,&
@@ -2999,7 +3000,7 @@ ENDIF ! LMFSHAL
 
 !END BYPASS
 !ENDIF
-IF (.TRUE.) THEN
+IF (LSURFEX) THEN
 IF (LTURB) THEN
 
   ! Swapp because IN and OUT might be needed simultaneously (though commented out)
@@ -3729,7 +3730,7 @@ ENDIF
 !IF (LNHDYN) THEN
 !ecriture du buffer
 !DEBUG LMSE ONLY IN hydro
-IF (.TRUE.) THEN
+IF (LSURFEX) THEN
 IF(LLMSE.OR.LSFORCS) THEN
   DO JLON = KIDIA,KFDIA
     PGPAR(JLON,MINPRR)=ZINPRR_(JLON)+ZSURFPREP(JLON)/1000._JPRB
@@ -3887,7 +3888,7 @@ ENDIF
 
 !IF (LSURFEX) THEN ! OK 15:31
 !* Compute PBL-diagnostics
-IF (.TRUE.) THEN
+IF (LSURFEX) THEN
 IF (LLMSE .OR.LSFORCS) THEN
 
    ZCAPE(:)=0._JPRB

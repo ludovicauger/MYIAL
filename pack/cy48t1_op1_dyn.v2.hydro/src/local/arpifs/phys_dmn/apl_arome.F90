@@ -956,7 +956,6 @@ REAL(KIND=JPRB), PARAMETER :: PPTKEMIN = 1.E-6
 ! Perturbed radiation-cloud interaction coef
 REAL(KIND=JPRB), DIMENSION (KLON) :: ZRADGR,ZRADSN
 REAL(KIND=JPRB) :: ZMU,ZVAL
-REAL(KIND=JPRB) :: ZALPHA
 INTEGER(KIND=JPIM) :: JKO,JKE
 
 REAL(KIND=JPRB) :: ZHOOK_HANDLE
@@ -1112,24 +1111,21 @@ ASSOCIATE(MINPRR=>YDPARAR%MINPRR, MINPRS=>YDPARAR%MINPRS, MVQS=>YDPARAR%MVQS, &
 
 ! this key remove the part of computations that render the model not reproducing
 ! H or NH when called in the other core
+!WRITE(6,*) 'DEBUG APL_AROME',__LINE__,LNHDYN
+CALL FLUSH(6)
+!IF (LNHDYN) CALL ABOR1('LNHDYN TRUE POURQUOI ?')
 !LSURFEX=.NOT.LNHDYN
+LSURFEX=LNHDYN
 !LSURFEX=.TRUE.
-ZALPHA=0.01
-IF (LNHDYN) THEN
-ZALPHA=1.
-ELSE
-ZALPHA=0.01
-END IF
-
-
-
 !     --------------------------------------------------------------------------
 !     0 - Check magnitude of model variables.
 !-------------------------------------------------
 !
+!IF (LSURFEX) THEN !OK 13:30 (ATTENTION SL débranché en NH)
 IF(LGCHECKMV) CALL CHECKMV(YDRIP,YDPHY0,YDPHY2,KIDIA,KFDIA,KLON,KLEV,KSTEP,PAPHIM,PAPHIFM &
 & ,PAPRSM,PAPRSFM,PGELAM,PGEMU,PMU0,PLSM,PTM,PQVM,PGPAR(:,MVTS))
 !     ------------------------------------------------------------------
+!IF (LSURFEX) THEN
 
 !    ------------------------------------------------------------------
 !     1 - Initialisations
@@ -1621,6 +1617,7 @@ IF (LFLEXDIA) THEN
   ENDDO
 ENDIF
 
+!IF (LSURFEX) THEN
 
 !    ------------------------------------------------------------------
 !     4 - ADJUSTMENT (CALLED IF THE MICROPHYSICS IS SWITCH ON) 
@@ -1982,7 +1979,8 @@ IF (LSFORCS) THEN   ! <== Surface forcing for MUSC
 
 ENDIF    ! <== End of surface forcing for MUSC
 
-IF (.TRUE.) THEN 
+!IF (LSURFEX) THEN !OK 13:39
+IF (LSURFEX) THEN 
 !     --------------------------------------------------------------------
 !     6 - RADIATION LRAYFM (IFS) or LRAY (ACRANEB2) 
 !     --------------------------------------------------------------------
@@ -2579,6 +2577,7 @@ IF (LFLEXDIA) THEN
 ENDIF
 ENDIF
 
+!IF (LSURFEX) THEN ! OK 13:50
 !    ------------------------------------------------------------------
 !     7 - CONVECTION. 
 !     --------------------------------------------------------------------
@@ -2635,12 +2634,16 @@ IF(LKFBCONV) THEN
 
 ENDIF
 
+!IF (LSURFEX) THEN ! OK 13:54
+!IF (LSURFEX) THEN
+!DEBUG UNPLUGG
+!IF (LNHDYN) THEN
 !    ------------------------------------------------------------------
 !     8 - SURFACE. 
 !     --------------------------------------------------------------------
 !DEBUG LMSE ONLY IN hydro
 !IF (LNHDYN.AND.LLMSE) THEN
-IF (.TRUE.) THEN
+IF (LSURFEX) THEN
 IF (LLMSE) THEN
 ! A loop around SURFEX in order to test OpenMP
 ! Initialisations 
@@ -2665,6 +2668,8 @@ IF (LLMSE) THEN
   ZSVMB_(KIDIA:KFDIA,1:NGFL_EXT)=ZSVM_(KIDIA:KFDIA,IKB,1:NGFL_EXT)
 
   IF (LLMSE_PARAM) THEN
+WRITE(6,*) 'DEBUG ARO_GROUND_PARAM',__LINE__,LNHDYN
+CALL FLUSH(6)
 !DEBUG BYPASS ARO_GROUND_PARAM
     IF (.TRUE.) THEN
     CALL ARO_GROUND_PARAM( KBL,KGPCOMP,&
@@ -2679,7 +2684,7 @@ IF (LLMSE) THEN
        & ZSVMB_,&
        & RCARDI,ZRHODREFM__(:,IKB),&
        & ZPABSM__(:,IKB),PAPRSM(KIDIA:KFDIA,KLEV),&
-       & ZDTMSE*ZALPHA,ZDEPTH_HEIGHT_(:,IKB),ZZS_, XZSEPS,&
+       & ZDTMSE,ZDEPTH_HEIGHT_(:,IKB),ZZS_, XZSEPS,&
        & PMU0(KIDIA:KFDIA),PMU0N(KIDIA:KFDIA),PGELAM(KIDIA:KFDIA),&
        & PGEMU(KIDIA:KFDIA),XSW_BANDS,&
        & ZINPRR_NOTINCR_,ZINPRS_NOTINCR_,&
@@ -2707,6 +2712,8 @@ IF (LLMSE) THEN
 
   IF (LLMSE_DIAG) THEN
 
+WRITE(6,*) 'DEBUG ARO_GROUND_PARAM',__LINE__,LNHDYN
+CALL FLUSH(6)
     CALL ARO_GROUND_DIAG( KBL, KGPCOMP,&
        & KFDIA,KIDIA,KFDIA,KLEV, IKL,&
        & NDGUNG, NDGUXG, NDLUNG, NDLUXG, LSURFEX_KFROM,&
@@ -2778,6 +2785,7 @@ ENDIF
 !END BYPASS
 !ENDIF
 
+!IF (LSURFEX) THEN ! OK 13:58
 IF (LMFSHAL) THEN
   IF (CMF_UPDRAFT=='DUAL') THEN
     ! Updraft computation from EDMF/ECMWF dual proposal
@@ -2999,7 +3007,7 @@ ENDIF ! LMFSHAL
 
 !END BYPASS
 !ENDIF
-IF (.TRUE.) THEN
+IF (LSURFEX) THEN
 IF (LTURB) THEN
 
   ! Swapp because IN and OUT might be needed simultaneously (though commented out)
@@ -3185,6 +3193,7 @@ ENDIF
 !!$     ENDDO
 !!$  ENDIF
 
+!IF (LSURFEX) THEN ! OK 15:08
 
   DO JLEV = 1 , KLEV
      PEDR(KIDIA:KFDIA,JLEV)=ZEDR__(KIDIA:KFDIA,JLEV)
@@ -3306,6 +3315,7 @@ ENDIF
 !END BYPASS
 !ENDIF
 
+!IF (LSURFEX) THEN ! OK 15:11
 IF (LMICRO) THEN
 
   ! Swap pointers because input values of THS and RS should be saved
@@ -3482,6 +3492,7 @@ IF (LMICRO) THEN
 
 ENDIF ! LMICRO
 
+!IF (LSURFEX) THEN ! OK 15:16
 
 !END BYPASS
 !ENDIF
@@ -3690,6 +3701,7 @@ IF (LIMIT_TENDQ)  THEN
   ENDDO
 ENDIF
 
+!IF (LSURFEX) THEN ! OK 15:21
 
 IF(LFORCENL.AND.(KSTEP*(TSPHY/RHOUR)>=NFORCESTART).AND.&
               & (KSTEP*(TSPHY/RHOUR)<=NFORCEEND)) THEN
@@ -3725,11 +3737,12 @@ IF (LSQUALL) THEN
 ENDIF
 
 
+!IF (LSURFEX) THEN ! OK 15:24
 !DEBUG UNPLUGG
 !IF (LNHDYN) THEN
 !ecriture du buffer
 !DEBUG LMSE ONLY IN hydro
-IF (.TRUE.) THEN
+IF (LSURFEX) THEN
 IF(LLMSE.OR.LSFORCS) THEN
   DO JLON = KIDIA,KFDIA
     PGPAR(JLON,MINPRR)=ZINPRR_(JLON)+ZSURFPREP(JLON)/1000._JPRB
@@ -3887,7 +3900,7 @@ ENDIF
 
 !IF (LSURFEX) THEN ! OK 15:31
 !* Compute PBL-diagnostics
-IF (.TRUE.) THEN
+IF (LSURFEX) THEN
 IF (LLMSE .OR.LSFORCS) THEN
 
    ZCAPE(:)=0._JPRB

@@ -1115,8 +1115,7 @@ ASSOCIATE(MINPRR=>YDPARAR%MINPRR, MINPRS=>YDPARAR%MINPRS, MVQS=>YDPARAR%MVQS, &
 CALL FLUSH(6)
 !IF (LNHDYN) CALL ABOR1('LNHDYN TRUE POURQUOI ?')
 !LSURFEX=.NOT.LNHDYN
-LSURFEX=LNHDYN
-!LSURFEX=.TRUE.
+LSURFEX=.TRUE.
 !     --------------------------------------------------------------------------
 !     0 - Check magnitude of model variables.
 !-------------------------------------------------
